@@ -1005,8 +1005,20 @@ class Game {
 }
 
 function cvs_adjust_size() {
-  cvs.width = window.innerWidth;
-  cvs.height = window.innerHeight;
+  var ratio = window.innerWidth / window.innerHeight;
+  var scale = 1;
+  var left = 0;
+  var top = 0;
+  if (ratio < cvs.width / cvs.height) {
+    scale = window.innerWidth / cvs.width;
+    top = (window.innerHeight - cvs.height * scale) / 2;
+  } else {
+    scale = window.innerHeight / cvs.height;
+    left = (window.innerWidth - cvs.width * scale) / 2;
+  }
+  cvs.setAttribute('style', 
+    'transform: scale(' + scale + '); transform-origin: top left;' + 
+    'position: absolute; left: ' + left + 'px; top: ' + top + 'px');
 }
 
 function window_resize(event) {
@@ -1022,6 +1034,8 @@ function window_keyup(e) {
 }
 
 cvs = document.getElementById("canvas");
+cvs.width = 852;
+cvs.height = 480;
 ctx = cvs.getContext("2d");
 window.addEventListener('resize', window_resize);
 document.addEventListener('keyup', window_keyup);
