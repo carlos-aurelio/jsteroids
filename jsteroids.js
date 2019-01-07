@@ -733,10 +733,23 @@ class Debris extends Particle {
   }
 }
 
-class Level {
-  constructor(cvs, level) {
-    this.cvs = cvs;
-    this.ctx = cvs.getContext("2d");
+class Scene {
+  constructor(game) {
+    this.game = game;
+    this.cvs = game.cvs;
+    this.ctx = game.cvs.getContext("2d");
+  }
+
+  step() { }
+
+  keydown(key) { }
+
+  keyup(key) { }
+}
+
+class Level extends Scene {
+  constructor(game, level) {
+    super(game);
     this.last_step = Date.now();
     this.level = level;
     this.score = new Score(this);
@@ -970,7 +983,7 @@ class Level {
 class Game {
   constructor(cvs) {
     this.cvs = cvs;
-    this.scene = new Level(this.cvs, 1);
+    this.scene = new Level(this, 1);
   }
 
   keydown(key) {
