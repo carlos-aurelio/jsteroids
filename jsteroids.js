@@ -222,7 +222,11 @@ class Stats extends UIText {
     this.text = [
       ('Total score: ' + score).padEnd(25),
       ('      Level: ' + level).padEnd(25),
-      ('   Accuracy: ' + accuracy + '%').padEnd(25)
+      ('   Accuracy: ' + accuracy + '%').padEnd(25),
+      '',
+      '',
+      '',
+      'Press <Enter> to start a new game'
     ];
   }
 
@@ -810,6 +814,9 @@ class Level extends Scene {
   keydown(key) {
     if (this.ship && this.ship.active) {
       this.ship.keydown(key);
+    }
+    if (!this.ship && key == 'Enter') {
+      this.game.newgame();
     }
   }
 
