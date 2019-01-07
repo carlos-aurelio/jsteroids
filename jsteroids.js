@@ -191,11 +191,11 @@ class GameOver extends UIText {
     this.text = 'GAME OVER';
     this.textAlign = 'center';
     this.size = 30;
+    this.x = this.scene.cvs.width / 2;
+    this.y = this.scene.cvs.height / 4;
   }
 
   draw() {
-    this.x = this.scene.cvs.width / 2;
-    this.y = this.scene.cvs.height / 4;
     super.draw();
   }
 }
