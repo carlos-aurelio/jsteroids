@@ -132,6 +132,17 @@ class UIText {
   }
 }
 
+class TitleText extends UIText {
+  constructor(scene) {
+    super(scene);
+    this.text = [ 'JSteroids', '', '', 'Press any key to start' ];
+    this.textAlign = 'center';
+    this.size = 30;
+    this.x = this.scene.cvs.width / 2;
+    this.y = this.scene.cvs.height / 2.5;
+  }
+}
+
 class Score extends UIText {
   constructor(scene) {
     super(scene);
@@ -747,6 +758,21 @@ class Scene {
   keyup(key) { }
 }
 
+class TitleScreen extends Scene {
+  constructor(game) {
+    super(game);
+    this.tt = new TitleText(this);
+  }
+
+  keydown(key) {
+    this.game.newgame();
+  }
+
+  step() {
+    this.tt.draw();
+  }
+}
+
 class Level extends Scene {
   constructor(game, level) {
     super(game);
@@ -983,6 +1009,10 @@ class Level extends Scene {
 class Game {
   constructor(cvs) {
     this.cvs = cvs;
+    this.scene = new TitleScreen(this);
+  }
+
+  newgame() {
     this.scene = new Level(this, 1);
   }
 
