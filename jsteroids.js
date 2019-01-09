@@ -875,16 +875,19 @@ class Level extends Scene {
       y = rand_range(0, this.cvs.height);
       tries++;
     } while (tries < max_tries && this.in_range_of_any(x, y, 120));
-    if (tries < max_tries) {
-      var a = new Asteroid(this, 12);
-      a.reposition(x, y);
-      a.x_speed = rand_range(-500, 500);
-      a.y_speed = rand_range(-500, 500);
-      this.add(a);
-      this.add_pending();
-    } else {
-      console.log('warning: no room for an asteroid');
+    if (tries >= max_tries) {
+      console.log('warning: no room for an asteroid, adding anywhere far away from the player');
+      do {
+        x = rand_range(0, this.cvs.width);
+        y = rand_range(0, this.cvs.height);
+      } while (this.in_range_of(x, y, 120, this.ship));
     }
+    var a = new Asteroid(this, 12);
+    a.reposition(x, y);
+    a.x_speed = rand_range(-500, 500);
+    a.y_speed = rand_range(-500, 500);
+    this.add(a);
+    this.add_pending();
   }
   
   update(interval) {
