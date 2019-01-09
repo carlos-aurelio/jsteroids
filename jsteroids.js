@@ -574,6 +574,7 @@ class Ship extends Body {
       this.shield = new Shield(this);
       this.children.push(this.shield);
     }
+    this.shot_keydown_time = Date.now();
   }
 
   keydown(key) {
@@ -595,6 +596,8 @@ class Ship extends Body {
           new Audio('shot.wav').play();
           this.scene.add(new Shot(this, -50000, 500));
           this.shot_fired = true;
+          this.shot_keydown_time = Date.now();
+          this.last_charge_particle = Date.now();
         }
         break;
     }
@@ -611,6 +614,10 @@ class Ship extends Body {
         break;
       case 'ArrowDown':
         this.shot_fired = false;
+        if (Date.now() - this.shot_keydown_time > 500) {
+          console.log("firing charged shot");
+          this.scene.add(new ChargedShot(this, -15000, 1000));
+        }
         break;
     }
   }
@@ -622,6 +629,10 @@ class Ship extends Body {
     if (this.accel !== 0 && Date.now() - this.last_engine_particle > 30) {
       this.scene.add(new EngineFire(this));
       this.last_engine_particle = Date.now();
+    }
+    if (this.shot_fired == true && Date.now() - this.shot_keydown_time > 500 && Date.now() - this.last_charge_particle > 100) {
+      this.scene.add(new ShotCharge(this));
+      this.last_charge_particle = Date.now();
     }
     super.update(interval);
   }
@@ -680,8 +691,41 @@ class Shot extends Body {
   }
 }
 
+class ChargedShot extends Body {
+  constructor (parent_body, speed, ttl) {
+    var poly = [
+      {'x': -10, 'y': 0},
+      {'x': 0, 'y': -10},
+      {'x': 10, 'y': 0},
+      {'x': 0, 'y': 10},
+    ];
+    super(parent_body.scene, poly);
+    var origin = rotate_pt({ 'x': 0, 'y': -20 }, parent_body.angle);
+    var t_origin = {
+      'x': origin.x + parent_body.x,
+      'y': origin.y + parent_body.y
+    };
+    var vec = rotate_pt({ 'x': 0, 'y': 1 }, parent_body.angle);
+    this.x_speed = vec.x * speed + parent_body.x_speed;
+    this.y_speed = vec.y * speed + parent_body.y_speed;
+    this.reposition(t_origin.x, t_origin.y);
+    this.p_angle = this.angle = parent_body.angle;
+    this.angle_speed = 2000;
+    this.expiration = Date.now() + ttl;
+    this.color = 'rgba(100, 255, 255, 1.0)';
+    this.class = 'chargedshot';
+  }
+
+  update(interval) {
+    super.update(interval);
+    if (Date.now() > this.expiration) {
+      this.scene.remove(this);
+    }
+  }
+}
+
 class Particle extends Body {
-  constructor (parent_body, ttl, hue, speed, angle) {
+  constructor (parent_body, ttl, hue, speed, angle, offset_x, offset_y) {
     var poly = [
       {'x': -1.5, 'y': 0},
       {'x': 0, 'y': -1.5},
@@ -689,7 +733,7 @@ class Particle extends Body {
       {'x': 0, 'y': 1.5},
     ];
     super(parent_body.scene, poly);
-    var origin = rotate_pt({ 'x': 0, 'y': 5 }, parent_body.angle);
+    var origin = rotate_pt({ 'x': offset_x, 'y': offset_y }, parent_body.angle);
     var t_origin = {
       'x': origin.x + parent_body.x,
       'y': origin.y + parent_body.y
@@ -727,7 +771,7 @@ class EngineFire extends Particle {
     var ttl = rand_range(300, 600);
     var speed = rand_range(6000, 15000);
     var angle = rand_range(-20, 20);
-    super(parent_body, ttl, hue, speed, angle);
+    super(parent_body, ttl, hue, speed, angle, 0, 5);
     this.lig = 50;
   }
 
@@ -741,10 +785,21 @@ class Debris extends Particle {
   constructor (parent_body, angle) {
     var ttl = rand_range(800, 1200);
     var speed = rand_range(5000, 10000);
-    super(parent_body, ttl, 0, speed, angle);
+    super(parent_body, ttl, 0, speed, angle, 0, 0);
     this.lig = 50;
     this.angle_speed = rand_range(-500, 500);
     this.sat = 0;
+  }
+}
+
+class ShotCharge extends Particle {
+  constructor (parent_body) {
+    var hue = 180;
+    var angle = rand_range(0, 360);
+    var pt = rotate_pt({ 'x': 0, 'y': 20 }, (angle + 180) % 360);
+    super(parent_body, 300, hue, 5000, angle, pt.x, pt.y - 19);
+    this.lig = rand_range(30, 70);
+    this.sat = 100;
   }
 }
 
@@ -899,14 +954,16 @@ class Level extends Scene {
       this.objects[i].update(interval);
     }
     for (var i = 0; i < this.objects.length; i++) {
-      if (this.objects[i].class == 'shot') {
+      if (this.objects[i].class == 'shot' || this.objects[i].class == 'chargedshot') {
         for (var k = 0; k < this.objects.length; k++) {
           if (this.objects[k].class == 'asteroid') {
             if (this.objects[i].intersects(this.objects[k])) {
               // asteroid is hit by shot
               this.score.add_points(this.level * 12 / this.objects[k].size);
-              this.asteroids_hit++;
-              this.remove(this.objects[i]);
+              if (this.objects[i].class == 'shot') {
+                this.asteroids_hit++;
+                this.remove(this.objects[i]);
+              }
               this.remove(this.objects[k]);
               this.objects[k].spawn_shards(this.objects[i]);
               break;
